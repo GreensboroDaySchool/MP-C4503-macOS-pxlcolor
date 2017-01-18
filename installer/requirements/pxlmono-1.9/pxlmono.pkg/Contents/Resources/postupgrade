@@ -1,0 +1,229 @@
+#!/bin/sh
+#
+#set -x
+################################################################################
+#                                                                              #
+#   Product name:   Installer postupgrade                                      #
+#   from package:   pxlmono                                                    #
+#                                                                              #
+#                                                                              #
+#   Copyright 2002-2004 by Tyler Blessing                                      #
+#    Modified 9-10-08 for pxlmono package by Matt Broughton                    #   
+#    Modified 12-28-08 for new driver naming scheme by Matt Broughton          #
+#   This program is freed software; you can redistribute it and/or modify it   #
+#   under the terms of the GNU General Public License as published by the Free #
+#   Software Foundation; either version 2 of the License, or (at your option)  #
+#   any later version.                                                         #
+#                                                                              #
+#   This program is distributed in the hope that it will be useful, but        #
+#   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY #
+#   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License   #
+#   for more details.                                                          #
+#                                                                              #
+#   You should have received a copy of the GNU General Public License          #
+#   along with this program; if not, write to the Free Software                #
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. #
+#                                                                              #
+################################################################################
+#
+###############################################################
+# +++ Load new CUPS PPDs for any existing pxlmono queues +++
+
+Xlpstat=/usr/bin/lpstat
+Xlpadmin=/usr/sbin/lpadmin
+
+if [ ! -x $Xlpstat ] ; then 
+exit
+fi
+
+# scan for existing queues...
+#
+# we want only the queue name so strip the leading directories
+# and the .ppd suffix...
+# we're using only `awk' here instead of `grep',`dirname', and `basename'
+# because awk should ALWAYS be available on OS X while the others may not
+
+echo checking for existing printer queues to update
+
+# set the CUPS ppd directory variable
+
+#MODEL_PPD_DIR="/usr/share/cups/model/C/"
+MODEL_PPD_DIR="/Library/Printers/PPDs/Contents/Resources/en.lproj"
+KEY_1=pxlmono
+KEY_2=[Pp][Xx][Ll]
+CUPS_PPD_DIR=/etc/cups/ppd
+NAME_KEY="save this file as"
+
+# just exit if there are no queues
+if [ \! $(ls "${CUPS_PPD_DIR}"|wc -l) -gt 0 ] ; then exit; fi
+
+# scan for existing queues matching the search key...
+#
+# we want only the queue name; strip the leading directories and the .ppd suffix
+
+QUEUE=($(awk -v key1="${KEY_1}" -v key2="${KEY_2}" '/NickName/ && ( $0 ~ key1 || $0 ~ key2) {oldORS=ORS;ORS=".";n=split( FILENAME,a,"/");m=split(a[n],b,".");for (i=1;i<m-1;i++) print b[i];ORS=oldORS;print b[i];nextfile;}' "${CUPS_PPD_DIR}"/*))
+
+echo updating the following queues... ${QUEUE[@]}
+
+# Although it looks like we're doing a lot of extra work here first stripping
+# away the directories and the .ppd extension only to add them back again we
+# actually need the naked queue name later ...
+
+# update each queue with the new PPD...
+
+for NAME in ${QUEUE[@]}
+
+do
+   CURRENT_SAVE_AS=`awk -F\' "/${NAME_KEY}/"'{print$2;}' "${CUPS_PPD_DIR}/${NAME}.ppd"`
+   	MFG=""
+	COLOR_DEVICE=""
+	COLOR_DEVICE=`awk "/ColorDevice/"'{print $2;}' "${CUPS_PPD_DIR}/${NAME}.ppd"`
+
+	if [ "${CURRENT_SAVE_AS}" = "" ]; then
+		##Printer must be a Ricoh brand.  User FoomaticIDs to determine
+		##PPD file name to use.
+		RICOH=yes  ##Tracker showing that we may have job codes to transfer
+		MFG=`awk -F\" "/Manufacturer/"'{print $2;}' "${CUPS_PPD_DIR}/${NAME}.ppd"`
+		
+		#PRINTER_MODEL1=`awk "/FoomaticIDs/"'{print $2;}' "${CUPS_PPD_DIR}/${NAME}.ppd"`
+		PRINTER_MODEL1=`awk -F\" "/ModelName/"'{print $2;}' ""${CUPS_PPD_DIR}/${NAME}.ppd"" | sed -e s#" "#-#1 -e s#" "#_#g -e s#\/#_#g -e s#\"##g`
+		
+		if [ "${COLOR_DEVICE}" = "True" ]; then
+			PRINTER_MODEL="${PRINTER_MODEL1}-pxlcolor-${MFG}.ppd"
+			else
+			PRINTER_MODEL="${PRINTER_MODEL1}-pxlmono-${MFG}.ppd"
+		fi
+		##########################################################
+		##Save any JobLog settings
+		sed -n '/OpenGroup: JobLog/,/CloseGroup: JobLog/s/\(^.*$\)/\1/p' "${CUPS_PPD_DIR}/${NAME}.ppd" > /private/tmp/${NAME}SavedJobCodes
+		##########################################################
+		
+		## Need double quotes to expand name variables
+		#PPD=`find $MODEL_PPD_DIR -name "${PRINTER_MODEL:-"/ "}*.ppd.gz"`
+		
+	
+	else   ## Deal with non-Ricoh printers
+		PRINTER_MODEL1=`awk "/FoomaticIDs/"'{print $2;}' "${CUPS_PPD_DIR}/${NAME}.ppd"`
+		if [ "${COLOR_DEVICE}" = "True" ]; then
+			PRINTER_MODEL="${PRINTER_MODEL1}-pxlcolor.ppd"
+			else
+			PRINTER_MODEL="${PRINTER_MODEL1}-pxlmono.ppd"
+		fi
+		PPD="${MODEL_PPD_DIR}"/"${PRINTER_MODEL:-"/ "}.gz"
+	fi
+   
+   
+   	PPD="${MODEL_PPD_DIR}"/"${PRINTER_MODEL:-"/ "}.gz"
+   	echo Using $PPD for queue $NAME
+	#if [ \! -z "${PPD}" ]; then
+    #	echo Using $PPD for queue $NAME
+    #	else
+    #	echo Using ${PRINTER_MODEL}-${MFG}.ppd.gz for queue $NAME
+    #fi
+
+	# make sure that the PPD file is readable
+   	if [ -r "${PPD}" ] ; then
+	# make sure that the cupsd scheduler is running since it may have just been sent SIGHUP
+    delay=1
+    while [ "`$Xlpstat -r 2>&1`" != "scheduler is running" -a $delay -lt 10 ]
+      do
+         sleep $delay
+         echo waiting $delay seconds for scheduler
+         ((delay*=2))
+      done
+# actually set the queue to use the new PPD
+     if [  "`$Xlpadmin -p $NAME -P \"${PPD}\" 2>&1`" ] ; then
+         echo ..........
+         echo The PPD for queue=$NAME failed to be updated.
+         echo setup failed or cupsd is not available.
+        
+      else
+      	if [ "$RICOH" = "yes" ]; then 
+        ##Transfer saved Job Codes for Ricoh printers
+        
+        ##Delete JobLog lines from new PPD
+        ##Insert blank lines before JobLog
+        ##Add back stored JobLog Codes
+        ##Don't forget to use double quotes when you need to expand variable
+         
+        ##The sed append command does not affect the contents of the pattern
+		##space.  The supplied text will not match any address in subsequent
+		##commands, nor can those commands affect the appended text.
+		 
+		 cat "${CUPS_PPD_DIR}/${NAME}.ppd"  | sed -e '/OpenGroup: JobLog/,/CloseGroup: JobLog/D' \
+		 -e '/CloseGroup: General/a \
+		 \
+		 \
+		 ' \
+		-e "/CloseGroup: General/r /private/tmp/${NAME}SavedJobCodes"  > /private/tmp/${NAME}CorrectedPPDFinal
+		
+		mv /private/tmp/${NAME}CorrectedPPDFinal "${CUPS_PPD_DIR}/${NAME}.ppd"
+              
+############  Simplified to one code block and one ouput file ##################         
+#		 cat "${CUPS_PPD_DIR}/${NAME}.ppd" | sudo sed '/OpenGroup: JobLog/,/CloseGroup: JobLog/D' > /private/tmp/${NAME}JobOptionsDeleted
+#		 ##Add back stored Job Codes
+#		 #cat /private/tmp/${NAME}SavedJobCodes
+#		 ##Don't forget to use double quotes when you need to expand variable
+#		 cat /private/tmp/${NAME}JobOptionsDeleted | sudo sed "/CloseGroup: General/r /private/tmp/${NAME}SavedJobCodes" > /private/tmp/${NAME}CorrectedPPD
+#		 ##Insert blank lines before JobLog
+#		 ##Original PPD had 2 blank lines before OpenGroup: JobLog
+#		 cat /private/tmp/${NAME}CorrectedPPD | sudo sed '/OpenGroup: JobLog/i \
+#		 \
+#		 \
+#		 ' > /private/tmp/${NAME}CorrectedPPDFinal
+#		 ##Install corrected PPD file to CUPS ppd directory
+#		 sudo mv /private/tmp/${NAME}CorrectedPPDFinal "${CUPS_PPD_DIR}/${NAME}.ppd"
+################################################################################
+
+		 ##Reset Ricoh marker
+		 RICOH=no
+		 fi
+         echo The PPD for queue=$NAME was updated successfully.
+      fi
+   else
+      echo The PPD $PPD for queue=$NAME failed to be updated because the PPD was not available.
+      echo Please update queue manually.
+   fi
+done
+
+##Clean up tmp directory
+rm /private/tmp/*SavedJobCodes
+#rm /private/tmp/*JobOptionsDeleted
+#rm /private/tmp/*CorrectedPPD
+rm /private/tmp/*CorrectedPPDFinal
+
+
+
+##Restart CUPS if PPD is updated
+
+if [ ${#QUEUE[@]} -gt 0 ] ; then
+	# Restart the cups daemon
+
+	# Is the daemon running?
+	# argument 1 is the PID
+	# argument 5 is the process string containing the name
+
+	PID=`ps axww | awk '{if (match($5, ".*/cupsd$")) print $1}'`
+	if [ -z "${PID}" ]; then
+		# -z option --True if the length oflogical string is zero 
+		#
+		# the cupsd daemon is not running
+		# let's start the cupsd daemon
+		/usr/sbin/cupsd
+		status=$?
+		if [ $status -ne 0 ]; then
+		echo "Could not start CUPS daemon"
+		exit 0
+		fi
+	else
+		#
+		# the cupsd daemon is running, just restart it
+		kill -HUP ${PID}
+		status=$?
+		if [ $status -eq 0 ]; then
+			echo "Restarting CUPS daemon"
+		else
+			echo "Could not recycle CUPS daemon"
+		fi
+	fi
+fi

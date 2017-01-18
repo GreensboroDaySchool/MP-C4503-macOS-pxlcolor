@@ -1,0 +1,5 @@
+#!/bin/bash
+
+## Restart CUPS printing system
+launchctl unload /System/Library/LaunchDaemons/org.cups.cupsd.plist
+launchctl load /System/Library/LaunchDaemons/org.cups.cupsd.plist

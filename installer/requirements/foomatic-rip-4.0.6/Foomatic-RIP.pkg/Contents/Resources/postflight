@@ -1,0 +1,95 @@
+#!/bin/bash
+#set -x
+
+######################################################################
+#
+#   Product name:   Installer postflight
+#   from package:   foomatic-rip
+#        version:   4.0.6
+#
+#   Copyright 2008  Matt Broughton <walterwego@macosx.com>
+#
+#   This program is freed software; you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the Free
+#   Software Foundation; either version 2 of the License, or (at your option)
+#   any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+#   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#   for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+######################################################################
+#
+##  Restart of CUPS needed.
+
+# Restart the cups daemon
+
+
+# Check the Mac OS version
+MACOS_VERSION_FILE=/System/Library/CoreServices/SystemVersion.plist
+
+MACOS_VERSION=$(awk '/ProductVersion/ {while (RLENGTH<4) {match($0,"[0-9]+([.][0-9]+)*");x=substr($0,RSTART,RLENGTH);getline;};print x;}' "${MACOS_VERSION_FILE}")
+
+MAJOR_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[1];nextfile;}')
+MINOR_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[2];nextfile;}')
+MICRO_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[3];nextfile;}')
+
+#echo ${MAJOR_VERSION}
+#echo ${MINOR_VERSION}
+#echo ${MICRO_VERSION}
+
+if [ 10 -eq ${MAJOR_VERSION:-10} -a 4 -ge ${MINOR_VERSION:-0} ] ; then
+	## Use the Panther/Tiger universal binary instead of the Leopar/SL binary.
+	if [ -x /usr/local/bin/foomatic-rip-PanTig ]; then
+		mv /usr/local/bin/foomatic-rip-PanTig /usr/local/bin/foomatic-rip
+		cd /usr/libexec/cups/filter/ && ln -s -f /usr/local/bin/foomatic-rip foomatic-rip
+	fi
+	
+	# Is the CUPS daemon running?
+	# argument 1 is the PID
+	# argument 5 is the process string containing the name
+
+	PID=`ps axww | awk '{if (match($5, ".*/cupsd$")) print $1}'`
+		if [ -z "${PID}" ]; then
+			# -z option --True if the length oflogical string is zero 
+			#
+			# the cupsd daemon is not running
+			# let's start the cupsd daemon
+			/System/Library/StartupItems/PrintingServices/PrintingServices start
+			status=$?
+				if [ $status -ne 0 ]; then
+					echo "Could not start Printing Services"
+					exit 0
+				fi
+		else
+			#
+			# the cupsd daemon is running, just restart it
+			/System/Library/StartupItems/PrintingServices/PrintingServices restart
+			status=$?
+				if [ $status -ne 0 ]; then
+					echo "Could not recycle pritning services"
+				fi
+		fi
+else ## OS X 10.5 and greater
+	## delete unneeded Panther/Tiger binary
+	if [ -f /usr/local/bin/foomatic-rip-PanTig ]; then
+		rm /usr/local/bin/foomatic-rip-PanTig
+		cd /usr/libexec/cups/filter/ && ln -s -f /usr/local/bin/foomatic-rip foomatic-rip
+	fi
+	
+	## Restart printing system
+	launchctl unload /System/Library/LaunchDaemons/org.cups.cupsd.plist
+	launchctl load /System/Library/LaunchDaemons/org.cups.cupsd.plist
+	status=$?
+		if [ $status -eq 0 ]; then
+			echo "Restarting CUPS daemon"
+		else
+			echo "Could not recycle CUPS daemon"
+		fi 
+fi

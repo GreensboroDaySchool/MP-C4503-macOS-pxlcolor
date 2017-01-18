@@ -1,0 +1,17 @@
+Title pxlmono
+Version 
+Description This will install PPDs for over 900 printers that use the PCL  XL printer language.  The PPDs work with Foomatic-RIP and the pxlmono and pxlcolor devices built into Ghostscript.
+DefaultLocation /
+DeleteWarning 
+
+### Package Flags
+
+NeedsAuthorization YES
+Required NO
+Relocatable NO
+RequiresReboot NO
+UseUserMask NO
+OverwritePermissions NO
+InstallFat NO
+RootVolumeOnly YES
+OnlyUpdateInstalledLanguages NO

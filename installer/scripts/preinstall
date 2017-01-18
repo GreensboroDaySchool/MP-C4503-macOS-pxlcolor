@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Install those requirements first
+
+PACKAGE="com.marcuszhou.gds.mp-c4503-pxlmono"
+PACKAGE_INSTALL_DIR="/Library/Printers/"
+PKG_UTIL="$(which pkgutil)"
+OPEN_UTIL="$(which open)"
+INSTALLER_UTIL="$(which installer)"
+GREP_UTIL="$(which grep)"
+SUDO_UTIL="$(which sudo)"
+RM_UTIL="$(which rm)"
+INSTALLED_PKGS="$($PKG_UTIL "--pkgs")"
+
+# Remove existed packets if found
+echo "Checking existed versions"
+if [ -n "$(echo "$INSTALLED_PKGS" | "$GREP_UTIL" "$PACKAGE")" ]; then
+  echo "Uninstalling existed verion"
+  PREV_FILES=( $(pkgutil --files $PACKAGE) )
+  for FILE in "${PREV_FILES[@]}"; do
+    echo "Attempting to remove $PACKAGE_INSTALL_DIR$FILE"
+    "$RM_UTIL" "$PACKAGE_INSTALL_DIR$FILE"
+  done
+  "$PKG_UTIL" "--forget" "$PACKAGE"
+fi
+
+echo "Checking requirements"
+
+echo "Checking Ghostscript"
+if [ -z "$(echo "$INSTALLED_PKGS" | "$GREP_UTIL" "org.tug.mactex.ghostscript*")" ]; then
+  echo "Installing Ghostscript"
+  "$SUDO_UTIL" "$INSTALLER_UTIL" "-pkg" "requirements/ghostscript/Ghostscript-9.20.pkg" "-target" "/"
+fi
+
+echo "Checking Foomatic-RIP"
+if [ -z "$(echo "$INSTALLED_PKGS" | "$GREP_UTIL" "org.linux-foundation.OpenPrinting.foomatic-rip-*")" ]; then
+  echo "Installing Foomatic-RIP"
+  "$SUDO_UTIL" "$INSTALLER_UTIL" "-pkg" "requirements/foomatic-rip-4.0.6/Foomatic-RIP.pkg" "-target" "/"
+fi
+
+echo "Checking pxlmono"
+if [ -z "$(echo "$INSTALLED_PKGS" | "$GREP_UTIL" "org.linux-foundation.OpenPrinting.pxlmono-*")" ]; then
+  echo "Installing pxlmono"
+  "$SUDO_UTIL" "$INSTALLER_UTIL" "-pkg" "requirements/pxlmono-1.9/pxlmono.pkg" "-target" "/"
+fi

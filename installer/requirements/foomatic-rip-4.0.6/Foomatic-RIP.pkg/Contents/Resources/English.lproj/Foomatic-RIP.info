@@ -1,0 +1,17 @@
+Title Foomatic-RIP
+Version 
+Description This package installs the Foomatic-RIP support files for Mac OS X CUPS printing.
+DefaultLocation /
+DeleteWarning 
+
+### Package Flags
+
+NeedsAuthorization YES
+Required NO
+Relocatable NO
+RequiresReboot NO
+UseUserMask NO
+OverwritePermissions NO
+InstallFat NO
+RootVolumeOnly YES
+OnlyUpdateInstalledLanguages NO

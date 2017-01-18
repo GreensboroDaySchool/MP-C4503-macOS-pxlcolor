@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>ReadMe</title>
+	<meta name="generator" content="BBEdit 7.1.4">
+</head>
+<body style="font-size:110%;">
+<h1>Foomatic-RIP<br>released March 28, 2011</h1>
+<h2>Software Requirements</h2>
+<p>
+<b>System software:</b> Mac OS X Panther (10.3.x) or later.
+</p>
+<p>
+<b>Additional software:</b> This software requires <a href="http://www.linuxfoundation.org/en/OpenPrinting/MacOSX/foomatic">Ghostscript</a> and at least one Foomatic PPD. 
+</p>
+<h2 style="margin-bottom:0em;">Description</h2>
+<p style="margin-top:0.25em;">On Mac OS X, foomatic-rip is a native CUPS filter that coordinates the printing process for drivers built for the Foomatic printing system. </p>
+
+<h2 style="margin-bottom:0em;">Release Notes</h2>
+<ul style="margin-top:0.25em;">
+<li>This release also includes a backend handler (beh).  A file describing the use of the backend handler is included on this disk image.</li>
+</ul>
+<h2 style="margin-bottom:0em;">Known Issues</h2>
+<p style="margin-top:0.25em;">Certain PPD files for PostScript printers obtained from the OpenPrinting.org site will cause Foomatic-RIP to crash.  Before using a PostScript PPD with Foomatic-RIP, examine the PPD file for the line:</p>
+
+<pre>*cupsFilter:	"application/vnd.cups-pdf 0 foomatic-rip"</pre>
+<p>If that line is found, it should be changed to:
+</p>
+<pre>*%cupsFilter:	"application/vnd.cups-pdf 0 foomatic-rip"</pre>
+
+
+<h2>Installation and Set Up</h2>
+<p> <b>Note for upgrading users:</b> You may safely install this version of the software over any other previous version.</p>
+<p> <b>Installing:</b> Simply run the installer (administrator privileges will be required). </p>
+<h2>Support</h2>
+<p>User-to-user support for printing under Mac OS X is available in our <a href="http://forums.freestandards.org/list.php?37">Mac OS X forum</a>. Other sources for help are Apple's Discussion forums (<a href="http://discussions.apple.com/forum.jspa?forumID=1344">Snow Leopard printing</a>, <a href="http://discussions.apple.com/forum.jspa?forumID=1224">Leopard printing</a>, <a href="http://discussions.apple.com/forum.jspa?forumID=756">Tiger printing</a>, and <a href="http://discussions.apple.com/forum.jspa?forumID=746">Panther printing</a>)</p>
+</body>
+</html>

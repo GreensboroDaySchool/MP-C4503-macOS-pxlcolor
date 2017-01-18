@@ -1,0 +1,138 @@
+#!/bin/sh
+################################################################################
+#                                                                              #
+#   Product name:   Installer preflight                                        #
+#   from package:   pxlmono                                                    #
+#                                                                              #
+#                                                                              #
+#   Copyright 2002-2004 by Tyler Blessing                                      #
+#    Modified March 12, 2009 for pxlmono package by Matt Broughton             #   
+#                                                                              #
+#   This program is freed software; you can redistribute it and/or modify it   #
+#   under the terms of the GNU General Public License as published by the Free #
+#   Software Foundation; either version 2 of the License, or (at your option)  #
+#   any later version.                                                         #
+#                                                                              #
+#   This program is distributed in the hope that it will be useful, but        #
+#   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY #
+#   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License   #
+#   for more details.                                                          #
+#                                                                              #
+#   You should have received a copy of the GNU General Public License          #
+#   along with this program; if not, write to the Free Software                #
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. #
+#                                                                              #
+################################################################################
+#
+#set -x
+Package_Name=pxlmono
+GS_Exec=/usr/local/bin/gs
+RIP_Exec=/usr/libexec/cups/filter/foomatic-rip
+IFS='
+'
+
+##########################
+# Check the Mac OS version
+MACOS_VERSION_FILE=/System/Library/CoreServices/SystemVersion.plist
+
+MACOS_VERSION=$(awk '/ProductVersion/ {while (RLENGTH<4) {match($0,"[0-9]+([.][0-9]+)*");x=substr($0,RSTART,RLENGTH);getline;};print x;}' "${MACOS_VERSION_FILE}")
+
+MAJOR_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[1];nextfile;}')
+MINOR_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[2];nextfile;}')
+MICRO_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[3];nextfile;}')
+
+#echo ${MAJOR_VERSION}
+#echo ${MINOR_VERSION}
+#echo ${MICRO_VERSION}
+
+# Get App name based on system version
+if [ 10 -eq ${MAJOR_VERSION:-10} ] ; then
+   if [ 2 -eq ${MINOR_VERSION:-0} ] ; then
+      PrintCenterAppName="Print Center.app"
+   elif  [ 3 -le ${MINOR_VERSION:-0} ] ; then
+      PrintCenterAppName="Printer Setup Utility.app"
+   fi
+fi
+
+####################################################################
+# quit Print Center if it's open so that new PPDs will be recognized
+#echo ${PrintCenterAppName}
+
+ PID=`ps axww | awk -v searchString="${PrintCenterAppName}" '!/awk/ && $0 ~ searchString {print $1;nextfile;}'`
+
+if [ \! -z "${PID}" ]; then
+   kill ${PID}
+fi
+
+##############################################################
+# Test system version and display a warning dialog if necessary
+# moved to InstallationCheck with customized string.  
+# Test for prerequisites and try to display warning.  Hopefully 
+# this will fail gracefully if changes are made to Installer.app.
+
+DialogMessageRIP="Install Foomatic-RIP before printing!\n\nSee the installer ReadMe, for more info about Foomatic-RIP.\n"
+
+
+DialogMessageGS="Install Ghostscript before printing!\n\nSee the installer ReadMe, for more info about Ghostscript.\n"
+
+# check for the osascript tool
+Script_App=/usr/bin/osascript
+if [ \! -x "${Script_App}" ] ; then
+   Script_App=$(find /usr /bin /sbin -name osascript -print 2>/dev/null |awk '{print $0;nextfile}')
+   echo using scripting app at ${Script_App}
+fi
+if [ \! -x "${Script_App}" ] ; then
+         echo "ERROR***ERROR***No scripting application found."
+         echo "Cannot display warnings, if any, to user."
+         exit 0
+fi
+
+
+
+##### Usage for do_info_dialog ()
+##### the variable DialogMessageDoInfo must
+##### be set before calling the function. 
+
+do_info_dialog () {
+if [ \! -x "${Script_App}" ] ; then return; fi
+
+TheResult=`"${Script_App}" <<EndMark
+	set AppleScript's text item delimiters to "\n"
+	tell application "System Events"
+		try
+			activate
+    	    display dialog "${DialogMessageDoInfo}"  with icon 2 buttons {"OK"} default button 1 giving up after 8
+		end try
+    end tell
+    tell application "Installer.app"
+    	try
+    		activate
+    	end try
+    end tell
+EndMark`
+}
+ 
+
+
+################################################################################
+### warn for early versions of 10.3 ############################################
+if [ 10 -eq ${MAJOR_VERSION:-10} -a 3 -eq ${MINOR_VERSION:-0} ] ; then
+   if [ 3 -gt ${MICRO_VERSION:=0} ] ; then
+
+      if [ \! -x "${Script_App}" ] ; then
+         exit 0
+      fi
+
+   TheResult=`"${Script_App}" <<EndMark3
+   tell application "System Events"
+    try
+  		activate
+      	display dialog "${DialogMessageUpgrade}" with icon 0 buttons {"OK"} default button 1 giving up after 8
+    end try
+   end tell
+   tell application "Installer.app"
+   activate
+   end tell
+EndMark3`
+	fi
+fi

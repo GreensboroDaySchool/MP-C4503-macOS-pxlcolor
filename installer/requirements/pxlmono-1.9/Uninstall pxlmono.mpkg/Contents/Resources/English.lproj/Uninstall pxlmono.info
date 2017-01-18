@@ -1,0 +1,17 @@
+Title Uninstall pxlmono
+Version 
+Description This will remove the software installed by pxlmono.pkg
+DefaultLocation 
+DeleteWarning 
+
+### Package Flags
+
+NeedsAuthorization NO
+Required NO
+Relocatable NO
+RequiresReboot NO
+UseUserMask NO
+OverwritePermissions NO
+InstallFat NO
+RootVolumeOnly NO
+OnlyUpdateInstalledLanguages NO

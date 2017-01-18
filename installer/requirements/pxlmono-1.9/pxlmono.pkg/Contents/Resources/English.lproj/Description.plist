@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IFPkgDescriptionDescription</key>
+	<string>This will install PPDs for over 900 printers that use the PCL  XL printer language.  The PPDs work with Foomatic-RIP and the pxlmono and pxlcolor devices built into Ghostscript.</string>
+	<key>IFPkgDescriptionTitle</key>
+	<string>pxlmono</string>
+</dict>
+</plist>

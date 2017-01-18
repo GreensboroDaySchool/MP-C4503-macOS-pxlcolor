@@ -1,0 +1,78 @@
+#!/bin/sh
+
+######################################################################
+#
+#   Product name:   Installer preinstall/preupgrade
+#   from package:   pxlmono 
+#        version:   1.7
+#
+#   Copyright 2010 by Matt Broughton <walterwego@macosx.com>
+#
+#   This program is freed software; you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the Free
+#   Software Foundation; either version 2 of the License, or (at your option)
+#   any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+#   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#   for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+######################################################################
+
+
+
+IFS="
+"
+#set -x
+##########################
+# Check the Mac OS version
+MACOS_VERSION_FILE=/System/Library/CoreServices/SystemVersion.plist
+
+MACOS_VERSION=$(awk '/ProductVersion/ {while (RLENGTH<4) {match($0,"[0-9]+([.][0-9]+)*");x=substr($0,RSTART,RLENGTH);getline;};print x;}' "${MACOS_VERSION_FILE}")
+
+MAJOR_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[1];nextfile;}')
+MINOR_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[2];nextfile;}')
+MICRO_VERSION=$(echo ${MACOS_VERSION}|awk '{split($0,a,".");print a[3];nextfile;}')
+
+#echo ${MAJOR_VERSION}
+#echo ${MINOR_VERSION}
+#echo ${MICRO_VERSION}
+
+#
+## This script should no longer be necessary as Snow Leopard will not always
+## leave a valid receipt in /Library/Receipts where a single package is
+## installed.
+## This will manage the associated entry in the receipts db appropriately.
+#
+
+if [ 10 -eq ${MAJOR_VERSION:-10} -a 6 -le ${MINOR_VERSION:-0} ] ; then
+	if [ \! -d "/Library/Receipts/pxlmono.pkg" ]; then
+	INSTALLED_PKGS=($(/usr/sbin/pkgutil --packages | grep "org.linux-foundation.OpenPrinting.pxlmono*"))
+	if [ ${#INSTALLED_PKGS[@]} -gt 0 ] ; then
+		for PKG in ${INSTALLED_PKGS[@]}; do
+			## Belt and suspenders -- actually 3x check as rm will 
+			## not remove a directory.
+			## Get list of only files.  Double check they are file or symlinks
+			## before acting.
+			FOO_FILES=( `/usr/sbin/pkgutil --files $PKG --only-files` )
+			echo Removing files...
+			for NAME in ${FOO_FILES[@]}; do
+				if [ -f /$NAME -o -L /$NAME ]; then
+					echo trying to delete /$NAME
+					rm  /$NAME
+				fi
+			done
+			
+			## Remove receipt
+			pkgutil --forget $PKG
+		done
+		
+	fi  ## end routine if pxlmono present
+	fi  ## end check for Receipt in /Library
+fi		## end system version check

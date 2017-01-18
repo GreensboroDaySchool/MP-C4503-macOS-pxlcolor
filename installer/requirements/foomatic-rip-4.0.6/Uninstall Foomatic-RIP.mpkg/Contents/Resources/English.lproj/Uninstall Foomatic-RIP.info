@@ -1,0 +1,17 @@
+Title Uninstall Foomatic-RIP
+Version 
+Description Uninstalls the Foomatic_RIP software.
+DefaultLocation 
+DeleteWarning 
+
+### Package Flags
+
+NeedsAuthorization NO
+Required NO
+Relocatable NO
+RequiresReboot NO
+UseUserMask NO
+OverwritePermissions NO
+InstallFat NO
+RootVolumeOnly NO
+OnlyUpdateInstalledLanguages NO
