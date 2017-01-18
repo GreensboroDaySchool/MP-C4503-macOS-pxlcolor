@@ -5,6 +5,28 @@ driver provides PCL XL support for macOS users in school, based on
 [pxlcolor-Ricoh](http://www.openprinting.org/driver/pxlcolor-Ricoh/)
 from [openprinting.org](http://www.openprinting.org/). MIT Licensed
 
+### Supported Printers in GDS
+
+Theoretically, the driver should work fine on any of the following printers:
+(Data from school's iPrint)
+
+| Printer Name                   | Printer Location               |
+|--------------------------------|--------------------------------|
+| Library Color                  | Media Center Library           |
+| Lower School 3rd Grade         | Lower School 3rd Grade         |
+| Lower School 4th Think Tank    | Lower School 4th Think Tank    |
+| Teacher Workroom Middle School | Teacher Workroom Middle School |
+| US Commons                     | Upper School Commons Up        |
+| Writing Center                 | Writing Center Upper School    |
+
+We've only tested the driver on the printers below
+
+| Printer Name                   | Printer Location               |
+|--------------------------------|--------------------------------|
+| Library Color                  | Media Center Library           |
+| US Commons                     | Upper School Commons Up        |
+| Writing Center                 | Writing Center Upper School    |
+
 ### Download
 
 Check the [Releases](/GreensboroDaySchool/MP-C4503-macOS-pxlcolor/releases)
