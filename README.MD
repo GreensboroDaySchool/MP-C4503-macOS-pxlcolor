@@ -29,7 +29,7 @@ We've only tested the driver on the printers below
 
 ### Download
 
-Check the [Releases](/GreensboroDaySchool/MP-C4503-macOS-pxlcolor/releases)
+Check the [Releases](https://github.com/GreensboroDaySchool/MP-C4503-macOS-pxlcolor/releases)
 for stable versions. We recommend everyone to use the .pkg installer, it will
 guide you through installing dependencies to add printer drivers.
 
