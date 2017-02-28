@@ -2,7 +2,7 @@
 
 ### Install tools
 
-* `MP-C4503-macOS-pxlcolor.mpkg` The installer package
+* `MP-C4503-macOS-pxlcolor.pkg` The installer package
 * `release-cups-sandbox.command` CUPS configuration tool
 
 ### Important notice
