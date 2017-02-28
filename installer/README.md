@@ -1,4 +1,18 @@
-### MP C4503 driver package
+# MP C4503 driver package
+
+### Install tools
+
+* `MP-C4503-macOS-pxlcolor.mpkg` The installer package
+* `release-cups-sandbox.command` CUPS configuration tool
+
+### Important notice
+
+Because the printing system in macOS is using Sandbox
+which caused the driver to not functioning, please run
+the `release-cups-sandbox.command` script to relax the
+sandbox.
+
+### About this directory
 
 This is the sources of the installer package. The
 installer will guide you through the installing

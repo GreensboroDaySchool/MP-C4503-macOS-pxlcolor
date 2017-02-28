@@ -1,5 +1,14 @@
 #!/bin/bash
 
-## Restart CUPS printing system
-launchctl unload /System/Library/LaunchDaemons/org.cups.cupsd.plist
-launchctl load /System/Library/LaunchDaemons/org.cups.cupsd.plist
+LAUNCH_CTL_TOOL="$(which launchctl)"
+CAT_TOOL="$(which cat)"
+GREP_TOOL="$(which grep)"
+
+CUPS_CONFIG="/etc/cups/cups-files.conf"
+CUPS_DAEMON="/System/Library/LaunchDaemons/org.cups.cupsd.plist"
+
+## Stop CUPS printing subsystem
+"$LAUNCH_CTL_TOOL" "unload" "$CUPS_DAEMON"
+
+## Restart CUPS printing subsystem
+"$LAUNCH_CTL_TOOL" "load" "$CUPS_DAEMON"
