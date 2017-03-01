@@ -35,7 +35,7 @@ guide you through installing dependencies to add printer drivers.
 
 ### Install
 
-1.  Secondary click (right click) on `MP-C4503-macOS-pxlcolor.mpkg`, then click
+1.  Secondary click (right click) on `MP-C4503-macOS-pxlcolor.pkg`, then click
     *Open*
 2.  Follow the steps of the installer and complete the wizard
 
